@@ -10,7 +10,7 @@ export const GavinHeneghanProvider={
   const db=await this.load(),q=norm(query),ft=norm(filters.type),fk=norm(filters.key),fm=norm(filters.meter),limit=Math.max(1,Math.min(Number(filters.limit)||100,500)),out=[];
   for(let i=0;i<db.length;i++){const t=db[i],info=t?.info||{},title=txt(info.T);if(q&&!norm(title).includes(q))continue;const vars=Object.entries(t?.variations||{});
    for(let j=0;j<vars.length;j++){const [variationId,abc]=vars[j];if(!abc)continue;const type=txt(info.R||abcField(abc,'R')),key=txt(info.K||abcField(abc,'K')),meter=txt(info.M||abcField(abc,'M'));if(ft&&!norm(type).includes(ft))continue;if(fk&&!norm(key).includes(fk))continue;if(fm&&!norm(meter).includes(fm))continue;
-    out.push({id:i+':'+variationId,title,type,key,meter,abc:txt(abc),source:{label:'Gavin Heneghan / ABC Tools tune database',databaseUrl:URL,variation:variationId}});if(out.length>=limit)return out;
+    out.push({id:i+':'+variationId,title,type,key,meter,abc:txt(abc),formats:{abc:{text:txt(abc)}},source:{label:'Gavin Heneghan / ABC Tools tune database',databaseUrl:URL,variation:variationId}});if(out.length>=limit)return out;
    }
   }return out;
  }
