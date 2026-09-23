@@ -14,8 +14,8 @@ async function run(){try{saveMemory();await stop();results.innerHTML='';status.t
 $('search').onclick=run;$('query').addEventListener('keydown',e=>{if(e.key==='Enter')run()});for(const id of['query','type','key','meter','instrument'])$(id).addEventListener('change',saveMemory);function updateSourceCount(){const boxes=[...document.querySelectorAll('[data-source]')],n=boxes.filter(x=>x.checked).length,active=boxes.filter(x=>!x.disabled&&x.checked).length;$('sourceCount').textContent=n+' ausgewählt'+(n>active?' · '+active+' aktiv':'')}document.querySelectorAll('[data-source]').forEach(x=>x.addEventListener('change',()=>{updateSourceCount();saveMemory()}));$('allSources').onclick=()=>{document.querySelectorAll('[data-source]').forEach(x=>x.checked=!x.disabled);updateSourceCount();saveMemory()};$('noSources').onclick=()=>{document.querySelectorAll('[data-source]').forEach(x=>x.checked=false);updateSourceCount();saveMemory()};$('clear').onclick=()=>{for(const id of['query','type','key','meter'])$(id).value='';saveMemory()};
 $('createList').onclick=()=>{const n=$('newList').value.trim();if(!n)return;lists[n]??=[];saveLists();$('newList').value='';refreshLists();$('listSelect').value=n;refreshLists()};$('listSelect').onchange=()=>{refreshLists($('listSelect').value);saveMemory()};
 $('exportList').onclick=()=>{const n=$('listSelect').value;if(!n)return;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({name:n,items:lists[n]},null,2)],{type:'application/json'}));a.download=n.replace(/[^a-z0-9_-]+/gi,'_')+'.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)};
-$('importButton').onclick=()=>$('importFile').click();$('importFile').onchange=async e=>{try{const f=e.target.files[0];if(!f)return;const d=JSON.parse(await f.text());if(!d.name||!Array.isArray(d.items))throw new Error('Ungültige Listendatei.');lists[d.name]=d.items;saveLists();refreshLists();$('listSelect').value=d.name;refreshLists();status.textContent='Liste „'+d.name+'“ geladen.'}catch(err){status.textContent='Importfehler: '+err.message}e.target.value=''};for(const id of['query','type','key','meter'])if(memory[id]!=null)$(id).value=memory[id];$('instrument').innerHTML=instruments.map(x=>'<option value="'+x[0]+'">'+x[1]+'</option>').join('');$('instrument').value=memory.instrument&&instruments.some(x=>x[0]===memory.instrument)?memory.instrument:'auto';const rememberedSources=Array.isArray(memory.sources)?memory.sources:['thesession','gavin'];document.querySelectorAll('[data-source]').forEach(x=>x.checked=!x.disabled&&rememberedSources.includes(x.value));updateSourceCount();refreshLists(memory.activeList);if(Array.isArray(memory.lastHits)&&memory.lastHits.length){show(memory.lastHits);status.textContent=memory.lastHits.length+' Treffer der letzten Suche wiederhergestellt.'}
-let vrvToolkit=null,vrvMidiUrl=null;
+$('importButton').onclick=()=>$('importFile').click();$('importFile').onchange=async e=>{try{const f=e.target.files[0];if(!f)return;const d=JSON.parse(await f.text());if(!d.name||!Array.isArray(d.items))throw new Error('Ungültige Listendatei.');lists[d.name]=d.items;saveLists();refreshLists();$('listSelect').value=d.name;refreshLists();status.textContent='Liste „'+d.name+'“ geladen.'}catch(err){status.textContent='Importfehler: '+err.message}e.target.value=''};for(const id of['query','type','key','meter'])if(memory[id]!=null)$(id).value=memory[id];$('instrument').innerHTML=instruments.map(x=>'<option value="'+x[0]+'">'+x[1]+'</option>').join('');$('instrument').value=memory.instrument&&instruments.some(x=>x[0]===memory.instrument)?memory.instrument:'auto';const rememberedSources=Array.isArray(memory.sources)?[...new Set([...memory.sources,'musetrainer'])]:['thesession','gavin','musetrainer'];document.querySelectorAll('[data-source]').forEach(x=>x.checked=!x.disabled&&rememberedSources.includes(x.value));updateSourceCount();refreshLists(memory.activeList);if(Array.isArray(memory.lastHits)&&memory.lastHits.length){show(memory.lastHits);status.textContent=memory.lastHits.length+' Treffer der letzten Suche wiederhergestellt.'}
+let vrvToolkit=null;
 async function ensureVerovio(){
  if(vrvToolkit)return vrvToolkit;
  if(typeof createVerovioModule!=='function')throw new Error('Verovio konnte nicht geladen werden.');
@@ -23,23 +23,3 @@ async function ensureVerovio(){
  vrvToolkit=new verovio.toolkit(mod);
  return vrvToolkit;
 }
-async function loadMusicXML(){
- const file=$('musicxmlFile').files?.[0];
- if(!file)throw new Error('Bitte eine MusicXML-Datei auswählen.');
- const tk=await ensureVerovio();
- $('musicxmlStatus').textContent='MusicXML wird geladen …';
- const data=await file.arrayBuffer();
- tk.loadData(new Uint8Array(data));
- tk.setOptions({scale:38,adjustPageHeight:true,breaks:'auto'});
- $('musicxmlPreview').innerHTML=tk.renderToSVG(1,{});
- const b64=tk.renderToMIDI();
- const raw=atob(b64),bytes=new Uint8Array(raw.length);
- for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);
- if(vrvMidiUrl)URL.revokeObjectURL(vrvMidiUrl);
- vrvMidiUrl=URL.createObjectURL(new Blob([bytes],{type:'audio/midi'}));
- $('musicxmlPlay').disabled=false;$('musicxmlStop').disabled=false;
- $('musicxmlStatus').textContent=file.name+' · MusicXML · Notenbild bereit · Wiedergabe bereit';
-}
-$('musicxmlOpen').onclick=()=>loadMusicXML().catch(e=>$('musicxmlStatus').textContent='MusicXML-Fehler: '+e.message);
-$('musicxmlPlay').onclick=()=>playMidi({formats:{midi:{url:vrvMidiUrl}}},$('musicxmlPlay')).catch(e=>$('musicxmlStatus').textContent='Vorhörfehler: '+e.message);
-$('musicxmlStop').onclick=()=>stop();
