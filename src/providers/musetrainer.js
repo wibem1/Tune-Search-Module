@@ -9,7 +9,7 @@ export const MuseTrainerProvider={
   const r=await fetch(INDEX);if(!r.ok)throw new Error('MuseTrainer-Katalog konnte nicht geladen werden ('+r.status+').');
   const html=await r.text(),doc=new DOMParser().parseFromString(html,'text/html');
   cache=[...doc.querySelectorAll('li')].map((li,i)=>{
-   const a=[...li.querySelectorAll('a')].find(x=>/\.mxl(?:$|[?#])/i.test(x.href));
+   const a=[...li.querySelectorAll('a')].find(x=>{try{const u=new URL(x.href);return u.hostname==='musetrainer.github.io'&&u.pathname.startsWith('/library/scores/')&&/\\.mxl$/i.test(u.pathname)}catch{return false}});
    if(!a)return null;
    const title=(li.childNodes[0]?.textContent||li.textContent.split('·')[0]||'').trim();
    return {id:a.href,title:title||decodeURIComponent(a.href.split('/').pop().replace(/_/g,' ')),type:'MusicXML',key:'',meter:'',formats:{musicxml:{url:a.href,compressed:true}},source:{label:'MuseTrainer',url:a.href}};
