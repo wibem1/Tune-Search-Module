@@ -1,36 +1,14 @@
-import {TuneSearch} from './tune-search.js?v=0.1.0';
-import {TheSessionProvider} from './providers/thesession.js?v=0.1.1';
-const engine=new TuneSearch({providers:[TheSessionProvider]});
-const q=document.getElementById('query'),status=document.getElementById('status'),results=document.getElementById('results');
-let synth=null,audioContext=null;
-function esc(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+import{TuneSearch}from'./tune-search.js?v=0.2.0';import{TheSessionProvider}from'./providers/thesession.js?v=0.2.0';
+const $=id=>document.getElementById(id),engine=new TuneSearch({providers:[TheSessionProvider]}),status=$('status'),results=$('results');let synth=null,audioContext=null;
+const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),STORE='tune-search-lists-v1';
+let lists=(()=>{try{return JSON.parse(localStorage.getItem(STORE)||'{}')}catch{return {}}})();const saveLists=()=>localStorage.setItem(STORE,JSON.stringify(lists));
 async function stop(){if(synth)try{synth.stop()}catch(_){}}
-async function preview(hit,box,button){
-  await stop();
-  document.querySelectorAll('.preview').forEach(x=>x.innerHTML='');
-  if(!audioContext)audioContext=new (window.AudioContext||window.webkitAudioContext)();
-  if(audioContext.state!=='running')await audioContext.resume();
-  const rendered=ABCJS.renderAbc(box,hit.abc,{responsive:'resize'});
-  if(!rendered[0])throw new Error('ABC konnte nicht gerendert werden.');
-  synth=new ABCJS.synth.CreateSynth();
-  await synth.init({audioContext,visualObj:rendered[0],options:{chordsOff:true}});
-  await synth.prime();
-  await synth.start();
-  button.textContent='Läuft …';
-}
-function show(hits){
-  results.innerHTML='';
-  hits.forEach((hit,i)=>{
-    const el=document.createElement('article');el.className='hit';
-    el.innerHTML='<h3>'+esc(hit.title||'(ohne Titel)')+'</h3><div class="meta">'+esc([hit.type,hit.key&&('Tonart '+hit.key),hit.meter&&('Takt '+hit.meter)].filter(Boolean).join(' · '))+'</div><div class="actions"><button class="play">▶ Vorhören</button><button class="stop">■ Stop</button></div><div class="preview"></div>';
-    const box=el.querySelector('.preview'),play=el.querySelector('.play');
-    play.onclick=()=>preview(hit,box,play).catch(e=>status.textContent='Vorhörfehler: '+e.message);
-    el.querySelector('.stop').onclick=async()=>{await stop();play.textContent='▶ Vorhören'};
-    results.appendChild(el);
-  });
-}
-async function run(){
-  try{await stop();results.innerHTML='';status.textContent='Datenbank laden / suchen …';const hits=await engine.search(q.value,{limit:50});show(hits);status.textContent=hits.length+' Treffer (max. 50).';}
-  catch(e){status.textContent='Suchfehler: '+e.message;}
-}
-document.getElementById('search').onclick=run;q.addEventListener('keydown',e=>{if(e.key==='Enter')run()});
+async function preview(hit,box,button){await stop();document.querySelectorAll('.preview').forEach(x=>x.innerHTML='');if(!audioContext)audioContext=new(window.AudioContext||window.webkitAudioContext)();if(audioContext.state!=='running')await audioContext.resume();const r=ABCJS.renderAbc(box,hit.abc,{responsive:'resize'});if(!r[0])throw new Error('ABC konnte nicht gerendert werden.');synth=new ABCJS.synth.CreateSynth();await synth.init({audioContext,visualObj:r[0],options:{chordsOff:true}});await synth.prime();await synth.start();button.textContent='Läuft …'}
+function refreshLists(){const names=Object.keys(lists).sort((a,b)=>a.localeCompare(b));$('listSelect').innerHTML=names.map(n=>'<option>'+esc(n)+'</option>').join('');const name=$('listSelect').value,items=lists[name]||[];$('saved').innerHTML=items.map((h,i)=>'<div class="saved"><strong>'+esc(h.title)+'</strong> <span class="meta">'+esc([h.type,h.key,h.meter].filter(Boolean).join(' · '))+'</span> <button data-remove="'+i+'">Entfernen</button></div>').join('');$('saved').querySelectorAll('[data-remove]').forEach(b=>b.onclick=()=>{lists[name].splice(+b.dataset.remove,1);saveLists();refreshLists()})}
+function add(hit){const name=$('listSelect').value;if(!name){status.textContent='Bitte zuerst eine Suchliste anlegen.';return}lists[name]??=[];if(!lists[name].some(x=>x.providerId===hit.providerId&&x.id===hit.id))lists[name].push(hit);saveLists();refreshLists();status.textContent='„'+hit.title+'“ wurde zu „'+name+'“ hinzugefügt.'}
+function show(hits){results.innerHTML='';hits.forEach(hit=>{const el=document.createElement('article');el.className='hit';el.innerHTML='<h3>'+esc(hit.title||'(ohne Titel)')+'</h3><div class="meta">'+esc([hit.type,hit.key&&'Tonart '+hit.key,hit.meter&&'Takt '+hit.meter].filter(Boolean).join(' · '))+'</div><div class="actions"><button class="play">▶ Vorhören</button><button class="stop">■ Stop</button><button class="add">＋ Zur Liste</button></div><div class="preview"></div>';const box=el.querySelector('.preview'),play=el.querySelector('.play');play.onclick=()=>preview(hit,box,play).catch(e=>status.textContent='Vorhörfehler: '+e.message);el.querySelector('.stop').onclick=async()=>{await stop();play.textContent='▶ Vorhören'};el.querySelector('.add').onclick=()=>add(hit);results.appendChild(el)})}
+async function run(){try{await stop();results.innerHTML='';status.textContent='Datenbank laden / suchen …';const hits=await engine.search($('query').value,{type:$('type').value,key:$('key').value,meter:$('meter').value,limit:100});show(hits);status.textContent=hits.length+' Treffer (max. 100).'}catch(e){status.textContent='Suchfehler: '+e.message}}
+$('search').onclick=run;$('query').addEventListener('keydown',e=>{if(e.key==='Enter')run()});$('clear').onclick=()=>{for(const id of['query','type','key','meter'])$(id).value=''};
+$('createList').onclick=()=>{const n=$('newList').value.trim();if(!n)return;lists[n]??=[];saveLists();$('newList').value='';refreshLists();$('listSelect').value=n;refreshLists()};$('listSelect').onchange=refreshLists;
+$('exportList').onclick=()=>{const n=$('listSelect').value;if(!n)return;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({name:n,items:lists[n]},null,2)],{type:'application/json'}));a.download=n.replace(/[^a-z0-9_-]+/gi,'_')+'.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)};
+$('importButton').onclick=()=>$('importFile').click();$('importFile').onchange=async e=>{try{const f=e.target.files[0];if(!f)return;const d=JSON.parse(await f.text());if(!d.name||!Array.isArray(d.items))throw new Error('Ungültige Listendatei.');lists[d.name]=d.items;saveLists();refreshLists();$('listSelect').value=d.name;refreshLists();status.textContent='Liste „'+d.name+'“ geladen.'}catch(err){status.textContent='Importfehler: '+err.message}e.target.value=''};refreshLists();
