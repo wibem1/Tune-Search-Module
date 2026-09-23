@@ -12,7 +12,7 @@ export const TheSessionProvider={
   for(const t of db){if(!t?.abc)continue;
    const title=field(t,'name','title','T'),type=field(t,'type','rhythm','R'),key=field(t,'key','K'),meter=field(t,'meter','M');
    if(q&&!norm(title).includes(q))continue;if(ft&&!norm(type).includes(ft))continue;if(fk&&!norm(key).includes(fk))continue;if(fm&&!norm(meter).includes(fm))continue;
-   out.push({id:txt(t.setting_id||t.id||out.length),title,type,key,meter,abc:txt(t.abc),source:{label:'The Session / ABC Tools tune database',databaseUrl:URL,settingId:t.setting_id||null,tuneId:t.tune_id||null}});
+   out.push({id:txt(t.setting_id||t.id||out.length),title,type,key,meter,abc:txt(t.abc),formats:{abc:{text:txt(t.abc)}},source:{label:'The Session / ABC Tools tune database',databaseUrl:URL,settingId:t.setting_id||null,tuneId:t.tune_id||null}});
    if(out.length>=limit)break;
   } return out;
  }
