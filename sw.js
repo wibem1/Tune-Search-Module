@@ -1,4 +1,4 @@
-const CACHE='tune-search-midi-layer-1';
+const CACHE='tune-search-musicxml-test-1';
 const CORE=['./','./index.html','./src/test-app.js','./src/tune-search.js','./src/providers/thesession.js','./src/providers/gavin-heneghan.js'];
 self.addEventListener('install',event=>{self.skipWaiting();event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(CORE)))});
 self.addEventListener('activate',event=>{event.waitUntil((async()=>{for(const key of await caches.keys())if(key!==CACHE)await caches.delete(key);await self.clients.claim()})())});
