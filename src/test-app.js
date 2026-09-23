@@ -18,12 +18,20 @@ $('importButton').onclick=()=>$('importFile').click();$('importFile').onchange=a
 let vrvToolkit=null;
 async function ensureVerovio(){
  if(vrvToolkit)return vrvToolkit;
- if(typeof verovio==='undefined')throw new Error('Verovio konnte nicht geladen werden.');
- if(!(verovio.module?.calledRun||verovio.module?.runtimeInitialized)){
+ if(typeof verovio==='undefined'){
   await new Promise((resolve,reject)=>{
-   const timer=setTimeout(()=>reject(new Error('Verovio-Initialisierung dauert zu lange.')),15000);
-   const previous=verovio.module.onRuntimeInitialized;
-   verovio.module.onRuntimeInitialized=()=>{clearTimeout(timer);try{if(typeof previous==='function')previous();}catch(_){}resolve();};
+   const script=document.createElement('script');
+   script.src='https://www.verovio.org/javascript/latest/verovio-toolkit-wasm.js';
+   script.onload=resolve;
+   script.onerror=()=>reject(new Error('Verovio-Skript konnte nicht geladen werden.'));
+   document.head.appendChild(script);
+  });
+ }
+ if(typeof verovio==='undefined'||!verovio.module)throw new Error('Verovio wurde geladen, aber nicht initialisiert.');
+ if(!(verovio.module.calledRun||verovio.module.runtimeInitialized)){
+  await new Promise((resolve,reject)=>{
+   const timer=setTimeout(()=>reject(new Error('Verovio-Initialisierung dauert zu lange.')),20000);
+   verovio.module.onRuntimeInitialized=()=>{clearTimeout(timer);resolve();};
   });
  }
  vrvToolkit=new verovio.toolkit();
