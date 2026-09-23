@@ -1,38 +1,19 @@
-// TheSession provider v0.1.1
-// Datenquelle und Datenformat entsprechen dem aktuellen ABC-Tools-Tune-Search-Bestand.
+// TheSession provider v0.2.0
 const URL='https://michaeleskin.com/abctools/abctunes_thesession_28may2026.json';
 let cache=null;
-function text(v){return v==null?'':String(v)}
+const txt=v=>v==null?'':String(v), norm=v=>txt(v).trim().toLocaleLowerCase();
+function field(t,...names){for(const n of names){const v=t?.[n]??t?.info?.[n];if(v!=null&&txt(v).trim())return txt(v)}return ''}
 export const TheSessionProvider={
-  id:'thesession',
-  label:'The Session',
-  async load(){
-    if(cache)return cache;
-    const r=await fetch(URL);
-    if(!r.ok)throw new Error('Tune-Datenbank konnte nicht geladen werden ('+r.status+').');
-    const data=await r.json();
-    if(!Array.isArray(data))throw new Error('Unerwartetes Tune-Datenformat.');
-    cache=data; return data;
-  },
-  async search(query,filters={}){
-    const db=await this.load(), q=text(query).trim().toLocaleLowerCase();
-    const limit=Math.max(1,Math.min(Number(filters.limit)||50,200));
-    const out=[];
-    for(const t of db){
-      if(!t||!t.abc)continue;
-      const title=text(t.name||t.title||t.info?.T);
-      if(!title.toLocaleLowerCase().includes(q))continue;
-      out.push({
-        id:text(t.setting_id||t.id||out.length),
-        title,
-        type:text(t.type||t.rhythm||t.info?.R),
-        key:text(t.key||t.info?.K),
-        meter:text(t.meter||t.info?.M),
-        abc:text(t.abc),
-        source:{label:'The Session / ABC Tools tune database',databaseUrl:URL,settingId:t.setting_id||null,tuneId:t.tune_id||null}
-      });
-      if(out.length>=limit)break;
-    }
-    return out;
-  }
+ id:'thesession',label:'The Session',
+ async load(){if(cache)return cache;const r=await fetch(URL);if(!r.ok)throw new Error('Tune-Datenbank konnte nicht geladen werden ('+r.status+').');const d=await r.json();if(!Array.isArray(d))throw new Error('Unerwartetes Tune-Datenformat.');cache=d;return d;},
+ async search(query,filters={}){
+  const db=await this.load(),q=norm(query),ft=norm(filters.type),fk=norm(filters.key),fm=norm(filters.meter);
+  const limit=Math.max(1,Math.min(Number(filters.limit)||100,500)),out=[];
+  for(const t of db){if(!t?.abc)continue;
+   const title=field(t,'name','title','T'),type=field(t,'type','rhythm','R'),key=field(t,'key','K'),meter=field(t,'meter','M');
+   if(q&&!norm(title).includes(q))continue;if(ft&&!norm(type).includes(ft))continue;if(fk&&!norm(key).includes(fk))continue;if(fm&&!norm(meter).includes(fm))continue;
+   out.push({id:txt(t.setting_id||t.id||out.length),title,type,key,meter,abc:txt(t.abc),source:{label:'The Session / ABC Tools tune database',databaseUrl:URL,settingId:t.setting_id||null,tuneId:t.tune_id||null}});
+   if(out.length>=limit)break;
+  } return out;
+ }
 };
