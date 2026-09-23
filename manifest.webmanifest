@@ -1,0 +1,10 @@
+{
+  "name": "Tune Search",
+  "short_name": "Tune Search",
+  "start_url": "./?v=0.3.5",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#eef1f4",
+  "theme_color": "#ffffff",
+  "description": "Tune Search – Musikquellen suchen, vorhören und sammeln"
+}
