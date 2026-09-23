@@ -1,7 +1,7 @@
 {
   "name": "Tune Search",
   "short_name": "Tune Search",
-  "start_url": "./?v=0.3.5",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#eef1f4",
