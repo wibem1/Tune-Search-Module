@@ -15,8 +15,8 @@ async function previewMusicXML(hit,box,button){try{
  const compressed=spec?.compressed||/\.mxl(?:$|[?#])/i.test(url);
  let loaded;
  if(compressed){
-  if(typeof tk.loadZipDataBuffer!=='function')throw new Error('Verovio bietet keinen MXL-Loader.');
-  try{loaded=tk.loadZipDataBuffer(buffer)}catch(e){throw new Error('MXL-Import: '+errorText(e))}
+  if(typeof tk.loadZipDataBase64!=='function')throw new Error('Verovio bietet keinen MXL-Loader.');
+  try{const bytes=new Uint8Array(buffer);let binary='';for(let i=0;i<bytes.length;i+=0x8000)binary+=String.fromCharCode(...bytes.subarray(i,i+0x8000));loaded=tk.loadZipDataBase64(btoa(binary))}catch(e){throw new Error('MXL-Import: '+errorText(e))}
  }else{
   try{loaded=tk.loadData(new TextDecoder('utf-8').decode(buffer))}catch(e){throw new Error('MusicXML-Import: '+errorText(e))}
  }
