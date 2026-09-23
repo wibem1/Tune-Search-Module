@@ -10,24 +10,28 @@ async function previewMusicXML(hit,box,button){try{
  const spec=hit.formats?.musicxml,url=typeof spec==='string'?spec:spec?.url;
  if(!url)throw new Error('MusicXML-Adresse fehlt.');
  const r=await fetch(url);if(!r.ok)throw new Error('MusicXML konnte nicht geladen werden ('+r.status+').');
- const tk=await ensureVerovio(),buffer=await r.arrayBuffer();
+ let xml;
+ if(spec?.compressed||/\\.mxl(?:$|[?#])/i.test(url)){
+  if(typeof JSZip==='undefined')throw new Error('MXL-Entpacker konnte nicht geladen werden.');
+  const zip=await JSZip.loadAsync(await r.arrayBuffer());
+  let rootPath='';
+  const container=zip.file('META-INF/container.xml');
+  if(container){const c=await container.async('string');rootPath=new DOMParser().parseFromString(c,'application/xml').querySelector('rootfile')?.getAttribute('full-path')||''}
+  let score=rootPath&&zip.file(rootPath);
+  if(!score){const name=Object.keys(zip.files).find(n=>!/^(META-INF|mimetype)/i.test(n)&&/\\.(musicxml|xml)$/i.test(n));score=name&&zip.file(name)}
+  if(!score)throw new Error('In der MXL-Datei wurde kein MusicXML gefunden.');
+  xml=await score.async('string');
+ }else xml=await r.text();
+ const tk=await ensureVerovio();
  tk.setOptions({pageWidth:1800,pageHeight:2450,scale:32,footer:'none'});
- const compressed=spec?.compressed||/\.mxl(?:$|[?#])/i.test(url);
- let loaded;
- if(compressed){
-  if(typeof tk.loadZipDataBase64!=='function')throw new Error('Verovio bietet keinen MXL-Loader.');
-  try{const bytes=new Uint8Array(buffer);let binary='';for(let i=0;i<bytes.length;i+=0x8000)binary+=String.fromCharCode(...bytes.subarray(i,i+0x8000));loaded=tk.loadZipDataBase64(btoa(binary))}catch(e){throw new Error('MXL-Import: '+errorText(e))}
- }else{
-  try{loaded=tk.loadData(new TextDecoder('utf-8').decode(buffer))}catch(e){throw new Error('MusicXML-Import: '+errorText(e))}
- }
- if(loaded===false)throw new Error('Verovio konnte die MusicXML-Datei nicht lesen.');
- const svg=tk.renderToSVG(1,false);if(!svg)throw new Error('Verovio hat kein Notenbild erzeugt.');box.innerHTML=svg;
- let midi64;try{midi64=tk.renderToMIDI()}catch(e){throw new Error('MIDI-Erzeugung: '+errorText(e))}
- if(!midi64)throw new Error('Verovio hat keine MIDI-Daten erzeugt.');
+ const ok=tk.loadData(xml);if(ok===false)throw new Error('MusicXML konnte nicht gelesen werden.');
+ const count=Math.max(1,tk.getPageCount());let pages='';
+ for(let p=1;p<=count;p++){const svg=tk.renderToSVG(p,false);if(!svg)throw new Error('Seite '+p+' konnte nicht gerendert werden.');pages+=svg}
+ box.innerHTML=pages;
+ const midi64=tk.renderToMIDI();if(!midi64)throw new Error('Verovio hat keine MIDI-Daten erzeugt.');
  const raw=atob(midi64),bytes=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);
  const midiUrl=URL.createObjectURL(new Blob([bytes],{type:'audio/midi'}));try{await playMidi({formats:{midi:{url:midiUrl}}},button)}finally{setTimeout(()=>URL.revokeObjectURL(midiUrl),1000)}
 }catch(e){throw new Error(errorText(e))}}
-function errorText(e){if(e instanceof Error&&e.message)return e.message;if(typeof e==='string')return e;try{const j=JSON.stringify(e);if(j&&j!=='{}')return j}catch(_){}return 'Unbekannter MusicXML-Fehler ('+Object.prototype.toString.call(e)+')'}
 async function previewHit(hit,box,button){if(hit.formats?.abc||hit.abc)return preview(hit,box,button);if(hit.formats?.musicxml)return previewMusicXML(hit,box,button);if(hit.formats?.midi)return playMidi(hit,button);throw new Error('Keine vorhörbare Datei vorhanden.')}
 function refreshLists(preferredName){const current=preferredName||$('listSelect').value||memory.activeList;const names=Object.keys(lists).sort((a,b)=>a.localeCompare(b));$('listSelect').innerHTML=names.map(n=>'<option>'+esc(n)+'</option>').join('');if(current&&names.includes(current))$('listSelect').value=current;const name=$('listSelect').value,items=lists[name]||[];memory.activeList=name||'';localStorage.setItem(STATE,JSON.stringify({...memory,activeList:memory.activeList}));$('saved').innerHTML=items.map((h,i)=>'<div class="saved"><strong>'+esc(h.title)+'</strong> <span class="meta">'+esc([h.type,h.key,h.meter].filter(Boolean).join(' · '))+'</span><div class="actions"><button data-play="'+i+'">▶ Vorhören</button><button data-stop="'+i+'">■ Stop</button><button data-remove="'+i+'">Entfernen</button></div><div class="preview" data-preview="'+i+'"></div></div>').join('');$('saved').querySelectorAll('[data-play]').forEach(b=>b.onclick=()=>previewHit(items[+b.dataset.play],$('saved').querySelector('[data-preview="'+b.dataset.play+'"]'),b).catch(e=>{console.error(e);status.textContent='Vorhörfehler: '+(e?.message||String(e)||'Unbekannter Fehler')}));$('saved').querySelectorAll('[data-stop]').forEach(b=>b.onclick=async()=>{await stop();const p=$('saved').querySelector('[data-play="'+b.dataset.stop+'"]');if(p)p.textContent='▶ Vorhören'});$('saved').querySelectorAll('[data-remove]').forEach(b=>b.onclick=()=>{lists[name].splice(+b.dataset.remove,1);saveLists();refreshLists(name)})}
 function add(hit){const name=$('listSelect').value;if(!name){status.textContent='Bitte zuerst eine Suchliste anlegen.';return}lists[name]??=[];if(!lists[name].some(x=>x.providerId===hit.providerId&&x.id===hit.id))lists[name].push(hit);saveLists();refreshLists(name);status.textContent='„'+hit.title+'“ wurde zu „'+name+'“ hinzugefügt.'}
