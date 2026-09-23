@@ -11,7 +11,7 @@ export const MuseTrainerProvider={
   const data=await r.json();
   cache=(data.tree||[]).filter(x=>x.type==='blob'&&x.path.startsWith('scores/')&&/\.mxl$/i.test(x.path)).map((x,i)=>{
    const file=x.path.split('/').pop(),title=decodeURIComponent(file.replace(/\.mxl$/i,'').replace(/_/g,' '));
-   const url=RAW+x.path.split('/').map(encodeURIComponent).join('/');
+   const url=RAW+x.path;
    return {id:x.sha||x.path,title,type:'MusicXML',key:'',meter:'',formats:{musicxml:{url,compressed:true}},source:{label:'MuseTrainer',url}};
   });
   return cache;
