@@ -18,8 +18,14 @@ $('importButton').onclick=()=>$('importFile').click();$('importFile').onchange=a
 let vrvToolkit=null;
 async function ensureVerovio(){
  if(vrvToolkit)return vrvToolkit;
- if(typeof createVerovioModule!=='function')throw new Error('Verovio konnte nicht geladen werden.');
- const mod=await createVerovioModule();
- vrvToolkit=new verovio.toolkit(mod);
+ if(typeof verovio==='undefined')throw new Error('Verovio konnte nicht geladen werden.');
+ if(!(verovio.module?.calledRun||verovio.module?.runtimeInitialized)){
+  await new Promise((resolve,reject)=>{
+   const timer=setTimeout(()=>reject(new Error('Verovio-Initialisierung dauert zu lange.')),15000);
+   const previous=verovio.module.onRuntimeInitialized;
+   verovio.module.onRuntimeInitialized=()=>{clearTimeout(timer);try{if(typeof previous==='function')previous();}catch(_){}resolve();};
+  });
+ }
+ vrvToolkit=new verovio.toolkit();
  return vrvToolkit;
 }
