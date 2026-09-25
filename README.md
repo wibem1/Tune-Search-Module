@@ -2,17 +2,15 @@
 
 ## Stabiler Stand: v0.6.2
 
-Eigenständiges Such- und Vorhörmodul für musikalische Quellen.
+Eigenständiges Such- und Vorhörmodul für musikalisches Quellenmaterial.
 
-Aktiv angeschlossen sind **The Session**, **Gavin Heneghan** und **MuseTrainer**. ABC-Quellen werden über abcjs dargestellt/vorgehört; MusicXML/MXL wird über Verovio geladen und für die Vorschau in MIDI umgesetzt. Suchlisten und der letzte Suchzustand bleiben lokal im Browser erhalten.
+Aktiv angeschlossen sind **The Session**, **Gavin Heneghan** und **MuseTrainer**. Je nach Quelle werden ABC bzw. MusicXML/MXL verarbeitet; Vorschau und Vorhören erfolgen mit den vorhandenen Browser-Musikkomponenten. Suchlisten können lokal gespeichert, exportiert und wieder importiert werden.
 
-## Stabilitätsregeln
+Die in der Oberfläche als „vorbereitet“ gekennzeichneten Quellen sind ausdrücklich noch nicht als aktive Provider angeschlossen.
 
-- Nur tatsächlich angeschlossene Quellen sind auswählbar; vorbereitete Quellen bleiben deaktiviert.
-- Versionsanzeige, Service-Worker-Cache und registrierte PWA-Ressourcen werden gemeinsam versioniert.
-- Programmcode, externe Quelle/API, Deployment und Browser/PWA-Cache werden getrennt diagnostiziert.
-- Neue Quellen werden einzeln integriert und getestet; sie dürfen funktionierende Provider nicht verändern.
+### Stabilitätsregeln
 
-## Stand v0.6.2
-
-Die statische Quellenanzeige wurde mit den drei tatsächlich aktivierten Quellen synchronisiert und die PWA-Ressourcen wurden versionsgebunden, damit ein alter Home-Screen-Cache nicht stillschweigend weiterläuft.
+- Versionsnummer, JavaScript-Asset und Service Worker werden gemeinsam versioniert.
+- Der Service Worker verwendet einen versionsgebundenen Cache und löscht alte Caches bei Aktivierung.
+- Externe Quelle/API, Programmcode, Deployment und PWA-Cache werden getrennt diagnostiziert.
+- Neue Suchprovider werden erst nach eigenständigem Test aktiviert.
