@@ -1,10 +1,18 @@
 # Tune Search Module
 
-App-unabhängiges Such- und Vorhörmodul für online verfügbare ABC-Musikbestände.
+## Stabiler Stand: v0.6.2
 
-## V0.1
-Erster Entwicklungsschritt: eigenständige Test-WebApp mit klar getrennter Provider-Schnittstelle. Zielkette: **Suchen → Treffer anzeigen → auswählen → vorhören**.
+Eigenständiges Such- und Vorhörmodul für musikalische Quellen.
 
-Die Suche wird nicht in Minimal Composer, MusicChat oder das Notation Module eingebaut, bevor der eigenständige Kern praktisch getestet ist.
+Aktiv angeschlossen sind **The Session**, **Gavin Heneghan** und **MuseTrainer**. ABC-Quellen werden über abcjs dargestellt/vorgehört; MusicXML/MXL wird über Verovio geladen und für die Vorschau in MIDI umgesetzt. Suchlisten und der letzte Suchzustand bleiben lokal im Browser erhalten.
 
-Siehe `ARCHITECTURE.md` und `DEVELOPMENT.md`.
+## Stabilitätsregeln
+
+- Nur tatsächlich angeschlossene Quellen sind auswählbar; vorbereitete Quellen bleiben deaktiviert.
+- Versionsanzeige, Service-Worker-Cache und registrierte PWA-Ressourcen werden gemeinsam versioniert.
+- Programmcode, externe Quelle/API, Deployment und Browser/PWA-Cache werden getrennt diagnostiziert.
+- Neue Quellen werden einzeln integriert und getestet; sie dürfen funktionierende Provider nicht verändern.
+
+## Stand v0.6.2
+
+Die statische Quellenanzeige wurde mit den drei tatsächlich aktivierten Quellen synchronisiert und die PWA-Ressourcen wurden versionsgebunden, damit ein alter Home-Screen-Cache nicht stillschweigend weiterläuft.
