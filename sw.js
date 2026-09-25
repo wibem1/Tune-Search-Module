@@ -1,4 +1,4 @@
-const CACHE='tune-search-v0.6.1';
+const CACHE='tune-search-v0.6.2';
 const CORE=['./','./index.html','./src/test-app.js','./src/preview-player.js','./src/tune-search.js','./src/providers/thesession.js','./src/providers/gavin-heneghan.js','./src/providers/musetrainer.js'];
 self.addEventListener('install',event=>{self.skipWaiting();event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(CORE)))});
 self.addEventListener('activate',event=>{event.waitUntil((async()=>{for(const key of await caches.keys())if(key!==CACHE)await caches.delete(key);await self.clients.claim()})())});
