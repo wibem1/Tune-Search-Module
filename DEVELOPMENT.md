@@ -1,3 +1,11 @@
+# DEVELOPMENT – Tune Search Module
+
+## 2026-09-25 — v0.6.2 — Konsolidierung
+- README an den tatsächlich vorhandenen Stand mit drei aktiven Providern angeglichen.
+- JavaScript-Asset und Service-Worker-Registrierung versionsgebunden; Cache auf `tune-search-v0.6.2` angehoben.
+- Vorbereitete, aber nicht implementierte Quellen bleiben in der Oberfläche deaktiviert und werden nicht als aktiv dargestellt.
+- Keine Änderung der bestätigten Such-/Vorhörlogik.
+
 # Entwicklungsprotokoll
 
 ## 2026-09-23 — v0.2.0 — Filter und Suchlisten
