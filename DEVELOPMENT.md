@@ -30,3 +30,8 @@
 - Keine vermutete Fehlerursache als Tatsache behandeln.
 - Kleine eigenständig testbare Schritte; erst nach bestandenem Praxistest erweitern.
 - Funktionierenden Code bei angrenzenden Änderungen nicht unnötig umbauen.
+
+## 2026-09-25 — v0.6.2 — Stabilisierung
+- Statische Quellenanzeige auf drei tatsächlich aktive Provider korrigiert.
+- Test-App und Service Worker versionsgebunden; Cache auf v0.6.2.
+- README auf den tatsächlich erreichten Funktionsstand aktualisiert.
